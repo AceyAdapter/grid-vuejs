@@ -6,12 +6,24 @@ import GridContainer from './components/GridContainer.vue'
   <div class="app">
     <header class="app-header">
       <h1 class="primary">The Grid</h1>
-      <p class="secondary">Responsive Widget Dashboard</p>
+      <p class="secondary">Customizable Widget Dashboard made with Vue 3</p>
     </header>
 
     <main class="app-main">
       <GridContainer />
     </main>
+
+    <footer>
+      <p>
+        Made with 💜 by
+        <a
+          href="https://www.linkedin.com/in/nicholas-kreitz-3a13531a0/"
+          target="_blank"
+          class="profile-link"
+          >Nicholas Kreitz</a
+        >
+      </p>
+    </footer>
   </div>
 </template>
 
@@ -44,6 +56,10 @@ import GridContainer from './components/GridContainer.vue'
   flex: 1;
   width: 100%;
   max-width: 1200px;
+}
+
+.profile-link {
+  color: gray;
 }
 
 @media (max-width: 767px) {

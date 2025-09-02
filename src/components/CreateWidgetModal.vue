@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 interface Props {
   isOpen: boolean
   columns: number
+}
+
+type ContentType = {
+  text?: string
+  textColor?: string
+  backgroundColor?: string
+  url?: string
+  localFile?: string
 }
 
 defineProps<Props>()
@@ -16,7 +24,13 @@ const emit = defineEmits<{
       type: 'text' | 'image'
       width: number
       height: number
-      content: { text?: string; url?: string }
+      content: {
+        text?: string
+        textColor?: string
+        backgroundColor?: string
+        url?: string
+        localFile?: string
+      }
     },
   ]
 }>()
@@ -24,34 +38,103 @@ const emit = defineEmits<{
 const selectedType = ref<'text' | 'image'>('text')
 const width = ref(2)
 const height = ref(2)
-const textContent = ref('')
+
+// Text widget properties
+const textContent = ref('Sample Text')
+const textColor = ref('#f2faff')
+const backgroundColor = ref('#4f46e5')
+
+// Image widget properties
 const imageUrl = ref('')
+const uploadedImage = ref<string | null>(null)
+const useUpload = ref(true) // Toggle between upload and URL
+
+// File upload handling
+const handleFileUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement
+  const file = target.files?.[0]
+
+  if (!file) return
+
+  // Check file size (10MB limit)
+  if (file.size > 10 * 1024 * 1024) {
+    alert('File size exceeds 10MB limit')
+    return
+  }
+
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Unsupported file format. Please use JPG, PNG, GIF, WebP, or SVG.')
+    return
+  }
+
+  // Convert to base64 for localStorage storage
+  const reader = new FileReader()
+  reader.onload = (e) => {
+    uploadedImage.value = e.target?.result as string
+  }
+  reader.readAsDataURL(file)
+}
+
+// Computed property for image source (Vue's equivalent to useMemo)
+const imageSource = computed(() => {
+  if (useUpload.value) {
+    return uploadedImage.value || ''
+  } else {
+    return imageUrl.value
+  }
+})
+
+// Computed styles for text preview
+const textPreviewStyle = computed(() => ({
+  color: textColor.value,
+  backgroundColor: backgroundColor.value,
+  padding: '16px',
+  borderRadius: '8px',
+  minHeight: '80px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '1rem',
+  fontWeight: 'normal',
+}))
 
 const handleBackdropClick = (event: MouseEvent) => {
-  // Only close if clicking the backdrop, not the modal content
   if (event.target === event.currentTarget) {
     emit('close')
   }
 }
 
 const handleCreate = () => {
-  if (selectedType.value == 'text') {
+  if (selectedType.value === 'text') {
     emit('createWidget', {
       type: selectedType.value,
       width: width.value,
       height: height.value,
       content: {
         text: textContent.value,
+        textColor: textColor.value,
+        backgroundColor: backgroundColor.value,
       },
     })
-  } else if (selectedType.value == 'image') {
+  } else if (selectedType.value === 'image') {
+    const content: ContentType = {}
+
+    if (useUpload.value && uploadedImage.value) {
+      content.localFile = uploadedImage.value
+    } else if (!useUpload.value && imageUrl.value) {
+      content.url = imageUrl.value
+    } else {
+      alert('Please provide an image')
+      return
+    }
+
     emit('createWidget', {
       type: selectedType.value,
       width: width.value,
       height: height.value,
-      content: {
-        url: imageUrl.value,
-      },
+      content,
     })
   }
 
@@ -60,6 +143,21 @@ const handleCreate = () => {
 
 const handleClose = () => {
   emit('close')
+}
+
+// Reset form when type changes
+const handleTypeChange = (type: 'text' | 'image') => {
+  selectedType.value = type
+  // Reset form values to defaults
+  if (type === 'text') {
+    textContent.value = 'Sample Text'
+    textColor.value = '#f2faff'
+    backgroundColor.value = '#4f46e5'
+  } else {
+    imageUrl.value = ''
+    uploadedImage.value = null
+    useUpload.value = true
+  }
 }
 
 // Handle escape key
@@ -71,7 +169,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 </script>
 
 <template>
-  <!-- v-if is Vue's conditional rendering (like {condition && <div>} in React) -->
   <Teleport to="body">
     <div
       v-if="isOpen"
@@ -101,14 +198,14 @@ const handleKeydown = (event: KeyboardEvent) => {
             <label class="form-label">Widget Type</label>
             <div class="widget-type-grid">
               <button
-                @click="selectedType = 'text'"
+                @click="handleTypeChange('text')"
                 :class="['widget-type-card', { active: selectedType === 'text' }]"
               >
                 <div class="widget-icon">📝</div>
                 <span>Text Widget</span>
               </button>
               <button
-                @click="selectedType = 'image'"
+                @click="handleTypeChange('image')"
                 :class="['widget-type-card', { active: selectedType === 'image' }]"
               >
                 <div class="widget-icon">🖼️</div>
@@ -117,25 +214,75 @@ const handleKeydown = (event: KeyboardEvent) => {
             </div>
           </div>
 
-          <!-- Content Configuration -->
-          <div class="form-section">
-            <label class="form-label">Content</label>
-            <label v-if="selectedType == 'text'" for="text">Text: </label>
+          <!-- Text Widget Configuration -->
+          <div v-if="selectedType === 'text'" class="form-section">
+            <label class="form-label">Text Content</label>
             <input
-              v-if="selectedType == 'text'"
               class="text-input"
               type="text"
-              id="text"
               v-model="textContent"
+              placeholder="Enter your text..."
             />
-            <label v-if="selectedType == 'image'" for="img_url">Image URL: </label>
-            <input
-              v-if="selectedType == 'image'"
-              class="text-input"
-              type="text"
-              id="img_url"
-              v-model="imageUrl"
-            />
+
+            <div class="color-controls">
+              <div class="color-control">
+                <label for="text-color">Text Color</label>
+                <input id="text-color" type="color" v-model="textColor" class="color-picker" />
+                <span class="color-value">{{ textColor }}</span>
+              </div>
+
+              <div class="color-control">
+                <label for="bg-color">Background Color</label>
+                <input id="bg-color" type="color" v-model="backgroundColor" class="color-picker" />
+                <span class="color-value">{{ backgroundColor }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Image Widget Configuration -->
+          <div v-if="selectedType === 'image'" class="form-section">
+            <label class="form-label">Image Source</label>
+
+            <div class="image-source-toggle">
+              <button @click="useUpload = true" :class="['toggle-button', { active: useUpload }]">
+                Upload File
+              </button>
+              <button @click="useUpload = false" :class="['toggle-button', { active: !useUpload }]">
+                URL
+              </button>
+            </div>
+
+            <div v-if="useUpload" class="upload-section">
+              <input
+                type="file"
+                accept="image/*"
+                @change="handleFileUpload"
+                class="file-input"
+                id="file-upload"
+              />
+              <label for="file-upload" class="file-upload-label">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path
+                    d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  />
+                  <polyline points="7,10 12,15 17,10" stroke="currentColor" stroke-width="2" />
+                  <line x1="12" y1="15" x2="12" y2="3" stroke="currentColor" stroke-width="2" />
+                </svg>
+                {{ uploadedImage ? 'Change File' : 'Choose File' }}
+              </label>
+              <p class="file-info">Max 10MB • JPG, PNG, GIF, WebP, SVG</p>
+            </div>
+
+            <div v-else class="url-section">
+              <input
+                class="text-input"
+                type="url"
+                v-model="imageUrl"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
           </div>
 
           <!-- Size Configuration -->
@@ -167,21 +314,45 @@ const handleKeydown = (event: KeyboardEvent) => {
             </div>
           </div>
 
-          <!-- Preview -->
+          <!-- Widget Preview -->
           <div class="form-section">
             <label class="form-label">Preview</label>
-            <div class="size-preview">
-              <div class="preview-grid" :style="{ gridTemplateColumns: `repeat(${columns}, 1fr)` }">
-                <div
-                  v-for="i in columns * 3"
-                  :key="i"
-                  :class="[
-                    'preview-cell',
-                    {
-                      'preview-selected': i <= width && Math.ceil(i / columns) <= height,
-                    },
-                  ]"
-                ></div>
+            <div class="widget-preview">
+              <!-- Text Widget Preview -->
+              <div
+                v-if="selectedType === 'text'"
+                class="preview-widget text-preview"
+                :style="textPreviewStyle"
+              >
+                {{ textContent || 'Sample Text' }}
+              </div>
+
+              <!-- Image Widget Preview -->
+              <div v-else-if="selectedType === 'image'" class="preview-widget image-preview">
+                <img
+                  v-if="imageSource"
+                  :src="imageSource"
+                  alt="Preview"
+                  class="preview-image"
+                  @error="() => {}"
+                />
+                <div v-else class="image-placeholder">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+                    <rect
+                      x="3"
+                      y="3"
+                      width="18"
+                      height="18"
+                      rx="2"
+                      ry="2"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                    <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="2" />
+                    <polyline points="21,15 16,10 5,21" stroke="currentColor" stroke-width="2" />
+                  </svg>
+                  <p>No image selected</p>
+                </div>
               </div>
             </div>
           </div>
@@ -265,7 +436,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   display: block;
   font-weight: 500;
   color: #f2faff;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   font-size: 0.875rem;
 }
 
@@ -304,18 +475,115 @@ const handleKeydown = (event: KeyboardEvent) => {
   font-size: 2rem;
 }
 
+.text-input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #404040;
+  color: #f2faff;
+  outline: none;
+  transition: border-color 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.text-input:focus {
+  border-color: #4f46e5;
+}
+
+.color-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.color-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-control label {
+  font-size: 0.875rem;
+  color: #97968a;
+}
+
+.color-picker {
+  width: 100%;
+  height: 40px;
+  border: 1px solid #555;
+  border-radius: 6px;
+  background: #404040;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.color-value {
+  font-size: 0.75rem;
+  color: #666;
+  font-family: monospace;
+}
+
+.image-source-toggle {
+  display: flex;
+  background-color: #404040;
+  border-radius: 6px;
+  border: 1px solid #555;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.toggle-button {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  color: #97968a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-button.active {
+  background-color: #4f46e5;
+  color: white;
+}
+
+.upload-section {
+  text-align: center;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background-color: #404040;
+  border: 2px dashed #666;
+  border-radius: 8px;
+  color: #97968a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.file-upload-label:hover {
+  border-color: #4f46e5;
+  background-color: #4a4a4a;
+}
+
+.file-info {
+  margin: 8px 0 0;
+  font-size: 0.75rem;
+  color: #666;
+}
+
 .size-controls {
   display: flex;
   flex-direction: column;
   gap: 16px;
-}
-
-.text-input {
-  height: 20px;
-  border-radius: 3px;
-  background: #404040;
-  color: white;
-  outline: none;
 }
 
 .size-control {
@@ -357,28 +625,50 @@ const handleKeydown = (event: KeyboardEvent) => {
   border: none;
 }
 
-.size-preview {
+.widget-preview {
   background-color: #1a1a1a;
   border-radius: 8px;
   padding: 16px;
   border: 1px solid #404040;
 }
 
-.preview-grid {
-  display: grid;
-  gap: 4px;
-  max-width: 200px;
+.preview-widget {
+  border-radius: 8px;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
-.preview-cell {
-  aspect-ratio: 1;
+.text-preview {
+  word-wrap: break-word;
+}
+
+.image-preview {
   background-color: #404040;
-  border-radius: 3px;
-  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.preview-selected {
-  background-color: #4f46e5;
+.preview-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.image-placeholder {
+  color: #666;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.image-placeholder p {
+  margin: 0;
+  font-size: 0.875rem;
 }
 
 .modal-footer {

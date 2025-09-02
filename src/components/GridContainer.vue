@@ -4,7 +4,7 @@ import FloatingAddButton from './FloatingAddButton.vue'
 import CreateWidgetModal from './CreateWidgetModal.vue'
 import WidgetObject from './WidgetObject.vue'
 
-// Widget interface
+// Updated Widget interface to match new content structure
 interface WidgetData {
   id: string
   type: 'text' | 'image'
@@ -12,7 +12,10 @@ interface WidgetData {
   size: { width: number; height: number }
   content: {
     text?: string
+    textColor?: string
+    backgroundColor?: string
     url?: string
+    localFile?: string
   }
   createdAt: number
 }
@@ -45,10 +48,16 @@ const handleResize = () => {
 // Lifecycle hooks
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  window.addEventListener('beforeunload', clearLocalStorage)
+  window.addEventListener('unload', clearLocalStorage)
+  loadFromLocalStorage()
 })
 
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
+  window.removeEventListener('beforeunload', clearLocalStorage)
+  window.removeEventListener('unload', clearLocalStorage)
+  clearLocalStorage()
 })
 
 // Simple auto-placement algorithm
@@ -91,7 +100,7 @@ const findAvailablePosition = (width: number, height: number) => {
 
 // Generate unique ID
 const generateId = () => {
-  return `widget_${Date.now()}_${Math.random().toString(36)}`
+  return `widget_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
 // Modal handlers
@@ -114,7 +123,10 @@ const createWidget = ({
   height: number
   content: {
     text?: string
+    textColor?: string
+    backgroundColor?: string
     url?: string
+    localFile?: string
   }
 }) => {
   const position = findAvailablePosition(width, height)
@@ -134,6 +146,7 @@ const createWidget = ({
   }
 
   widgets.value.push(newWidget)
+  saveToLocalStorage()
 }
 
 // Update widget position after drag and drop
@@ -141,6 +154,7 @@ const updateWidget = ({ id, position }: { id: string; position: { x: number; y: 
   const widget = widgets.value.find((w) => w.id === id)
   if (widget) {
     widget.position = position
+    saveToLocalStorage()
   }
 }
 
@@ -166,6 +180,42 @@ const handleDragEnd = () => {
   draggedWidgetId.value = null
   hoveredCells.value = []
   isValidDrop.value = true
+}
+
+// LocalStorage functions
+const saveToLocalStorage = () => {
+  try {
+    const data = {
+      version: '1.0.0',
+      widgets: widgets.value,
+      lastUpdated: Date.now(),
+    }
+    localStorage.setItem('grid-dashboard', JSON.stringify(data))
+  } catch (error) {
+    console.error('Failed to save to localStorage:', error)
+  }
+}
+
+const loadFromLocalStorage = () => {
+  try {
+    const data = localStorage.getItem('grid-dashboard')
+    if (data) {
+      const parsed = JSON.parse(data)
+      if (parsed.widgets && Array.isArray(parsed.widgets)) {
+        widgets.value = parsed.widgets
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load from localStorage:', error)
+  }
+}
+
+const clearLocalStorage = () => {
+  try {
+    localStorage.removeItem('grid-dashboard')
+  } catch (error) {
+    console.error('Failed to clear localStorage:', error)
+  }
 }
 
 // Generate grid cells for visualization

@@ -8,7 +8,10 @@ interface Widget {
   size: { width: number; height: number }
   content: {
     text?: string
+    textColor?: string
+    backgroundColor?: string
     url?: string
+    localFile?: string
   }
 }
 
@@ -39,6 +42,22 @@ const hoveredGridPosition = ref<{ x: number; y: number } | null>(null)
 
 // Current hovered position validity
 const currentHoverIsValid = ref(true)
+
+// Computed styles for text widgets
+const textWidgetStyle = computed(() => {
+  if (props.widget.type !== 'text') return {}
+
+  return {
+    backgroundColor: props.widget.content.backgroundColor || '#4f46e5',
+    color: props.widget.content.textColor || '#f2faff',
+  }
+})
+
+// Computed image source
+const imageSource = computed(() => {
+  if (props.widget.type !== 'image') return ''
+  return props.widget.content.localFile || props.widget.content.url || ''
+})
 
 // Computed style for positioning during drag
 const dragStyle = computed(() => {
@@ -346,11 +365,37 @@ const resetTouchDrag = () => {
         </svg>
       </div>
 
-      <div v-if="widget.type === 'text'" class="text-widget">
-        <h3>{{ widget.content.text }}</h3>
+      <!-- Text Widget -->
+      <div v-if="widget.type === 'text'" class="text-widget" :style="textWidgetStyle">
+        <p>{{ widget.content.text || 'Text Widget' }}</p>
       </div>
+
+      <!-- Image Widget -->
       <div v-else-if="widget.type === 'image'" class="image-widget">
-        <img :src="widget.content.url" alt="" />
+        <img
+          v-if="imageSource"
+          :src="imageSource"
+          :alt="widget.content.text || 'Image Widget'"
+          class="widget-image"
+          @error="() => {}"
+        />
+        <div v-else class="image-placeholder">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <rect
+              x="3"
+              y="3"
+              width="18"
+              height="18"
+              rx="2"
+              ry="2"
+              stroke="currentColor"
+              stroke-width="2"
+            />
+            <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="2" />
+            <polyline points="21,15 16,10 5,21" stroke="currentColor" stroke-width="2" />
+          </svg>
+          <span>No Image</span>
+        </div>
       </div>
     </div>
   </div>
@@ -382,12 +427,12 @@ const resetTouchDrag = () => {
 
 .widget-content {
   height: 100%;
-  padding: 12px;
+  width: 100%;
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  text-align: center;
-  position: relative;
+  align-items: center;
 }
 
 .drag-handle {
@@ -398,26 +443,76 @@ const resetTouchDrag = () => {
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;
+  z-index: 10;
 }
 
 .widget:hover .drag-handle {
   opacity: 1;
 }
 
-.text-widget h3,
-.image-widget h3 {
-  color: #f2faff;
-  font-size: 1rem;
+.text-widget {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  border-radius: 6px;
+  word-wrap: break-word;
+  overflow: hidden;
 }
 
 .text-widget p {
   margin: 0;
-  color: #97968a;
-  font-size: 0.875rem;
+  font-size: 1rem;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.image-widget {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.widget-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
 }
 
 .image-placeholder {
-  font-size: 2rem;
-  opacity: 0.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #666;
+  text-align: center;
+}
+
+.image-placeholder span {
+  font-size: 0.875rem;
+}
+
+/* Responsive text sizing */
+@media (max-width: 767px) {
+  .text-widget p {
+    font-size: 0.875rem;
+  }
+
+  .drag-handle {
+    top: 4px;
+    right: 4px;
+  }
+
+  .text-widget {
+    padding: 8px;
+  }
 }
 </style>

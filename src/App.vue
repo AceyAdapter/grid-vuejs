@@ -1,11 +1,22 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import GridContainer from './components/GridContainer.vue'
+
+const gridData = [1, 2, 3, 4, 5, 6, 7]
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <div class="grid">
+    <GridContainer v-for="item in gridData" :key="item" />
+  </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.grid {
+  display: flex;
+  width: auto;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+</style>

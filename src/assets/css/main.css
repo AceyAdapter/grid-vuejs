@@ -1,0 +1,19 @@
+html,
+body {
+  background-color: #1b1a1a;
+  color: #97968a;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.secondary {
+  color: #97968a;
+}
+
+.primary {
+  color: #f2faff;
+}
+
+.button-primary {
+  background-color: #2f2f2f;
+  color: #f2faff;
+}

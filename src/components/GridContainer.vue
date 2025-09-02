@@ -19,6 +19,12 @@ const containerRef = ref<HTMLElement>()
 const isModalOpen = ref(false)
 const widgets = ref<WidgetData[]>([])
 
+// Drag state for visual feedback
+const isDragging = ref(false)
+const draggedWidgetId = ref<string | null>(null)
+const hoveredCells = ref<{ x: number; y: number }[]>([])
+const isValidDrop = ref(true)
+
 const isMobile = computed(() => screenWidth.value < 768)
 const columns = computed(() => (isMobile.value ? 4 : 8))
 const rows = computed(() => 6)
@@ -130,13 +136,41 @@ const updateWidget = ({ id, position }: { id: string; position: { x: number; y: 
   }
 }
 
-// Generate grid cells for empty spaces (optional visualization)
+// Drag event handlers
+const handleDragStart = ({ id }: { id: string }) => {
+  isDragging.value = true
+  draggedWidgetId.value = id
+}
+
+const handleDragMove = ({
+  hoveredCells: cells,
+  isValid,
+}: {
+  hoveredCells: { x: number; y: number }[]
+  isValid: boolean
+}) => {
+  hoveredCells.value = cells
+  isValidDrop.value = isValid
+}
+
+const handleDragEnd = () => {
+  isDragging.value = false
+  draggedWidgetId.value = null
+  hoveredCells.value = []
+  isValidDrop.value = true
+}
+
+// Generate grid cells for visualization
 const gridCells = computed(() => {
   const total = columns.value * rows.value
   const occupiedCells = new Set<string>()
 
-  // Mark occupied cells
+  // Mark occupied cells (excluding dragged widget)
   widgets.value.forEach((widget) => {
+    if (isDragging.value && widget.id === draggedWidgetId.value) {
+      return // Skip the dragged widget
+    }
+
     for (let x = widget.position.x; x < widget.position.x + widget.size.width; x++) {
       for (let y = widget.position.y; y < widget.position.y + widget.size.height; y++) {
         occupiedCells.add(`${x},${y}`)
@@ -149,13 +183,31 @@ const gridCells = computed(() => {
     const y = Math.floor(index / columns.value)
     const key = `${x},${y}`
 
+    // Check if this cell is being hovered during drag
+    const isHovered =
+      isDragging.value && hoveredCells.value.some((cell) => cell.x === x && cell.y === y)
+
     return {
       id: index,
       x,
       y,
       occupied: occupiedCells.has(key),
+      isHovered,
+      isValidHover: isHovered && isValidDrop.value,
+      isInvalidHover: isHovered && !isValidDrop.value,
     }
   })
+})
+
+// Determine which cells to show based on drag state
+const visibleCells = computed(() => {
+  if (isDragging.value) {
+    // During drag, show all cells for visual feedback
+    return gridCells.value
+  } else {
+    // When not dragging, only show empty cells
+    return gridCells.value.filter((cell) => !cell.occupied)
+  }
 })
 </script>
 
@@ -165,17 +217,25 @@ const gridCells = computed(() => {
     <div
       ref="containerRef"
       class="grid-wrapper"
+      :class="{ 'dragging-active': isDragging }"
       :style="{
         gridTemplateColumns: gridTemplate,
         gridTemplateRows: `repeat(${rows}, 1fr)`,
       }"
     >
-      <!-- Grid cells for empty spaces -->
+      <!-- Grid cells for empty spaces and drag feedback -->
       <div
-        v-for="cell in gridCells"
+        v-for="cell in visibleCells"
         :key="cell.id"
-        v-show="!cell.occupied"
-        class="grid-cell"
+        v-show="!cell.occupied || cell.isHovered"
+        :class="[
+          'grid-cell',
+          {
+            'grid-cell-hovered': cell.isHovered,
+            'grid-cell-valid': cell.isValidHover,
+            'grid-cell-invalid': cell.isInvalidHover,
+          },
+        ]"
         :data-x="cell.x"
         :data-y="cell.y"
       ></div>
@@ -189,6 +249,9 @@ const gridCells = computed(() => {
         :rows="rows"
         :widgets="widgets"
         @update-widget="updateWidget"
+        @drag-start="handleDragStart"
+        @drag-move="handleDragMove"
+        @drag-end="handleDragEnd"
       />
     </div>
 
@@ -224,6 +287,11 @@ const gridCells = computed(() => {
   border-radius: 12px;
   padding: 8px;
   border: 2px solid #3a3a3a;
+  transition: border-color 0.2s ease;
+}
+
+.grid-wrapper.dragging-active {
+  border-color: #4f46e5;
 }
 
 .grid-cell {
@@ -244,6 +312,39 @@ const gridCells = computed(() => {
   background-color: #505050;
   border-color: #666;
   opacity: 0.6;
+}
+
+/* Drag feedback styles */
+.grid-cell-hovered {
+  opacity: 0.8;
+  transform: scale(0.95);
+  z-index: 10;
+}
+
+.grid-cell-valid {
+  background-color: #22c55e !important;
+  border-color: #16a34a !important;
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
+}
+
+.grid-cell-invalid {
+  background-color: #ef4444 !important;
+  border-color: #dc2626 !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.4);
+  animation: shake 0.3s ease-in-out;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: scale(0.95) translateX(0);
+  }
+  25% {
+    transform: scale(0.95) translateX(-2px);
+  }
+  75% {
+    transform: scale(0.95) translateX(2px);
+  }
 }
 
 /* Responsive adjustments */

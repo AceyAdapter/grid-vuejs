@@ -10,7 +10,10 @@ interface WidgetData {
   type: 'text' | 'image'
   position: { x: number; y: number }
   size: { width: number; height: number }
-  content: unknown
+  content: {
+    text?: string
+    url?: string
+  }
   createdAt: number
 }
 
@@ -104,10 +107,15 @@ const createWidget = ({
   type,
   width,
   height,
+  content,
 }: {
   type: 'text' | 'image'
   width: number
   height: number
+  content: {
+    text?: string
+    url?: string
+  }
 }) => {
   const position = findAvailablePosition(width, height)
 
@@ -121,7 +129,7 @@ const createWidget = ({
     type,
     position,
     size: { width, height },
-    content: {},
+    content: content,
     createdAt: Date.now(),
   }
 

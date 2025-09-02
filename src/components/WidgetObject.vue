@@ -6,7 +6,10 @@ interface Widget {
   type: 'text' | 'image'
   position: { x: number; y: number }
   size: { width: number; height: number }
-  content: unknown
+  content: {
+    text?: string
+    url?: string
+  }
 }
 
 interface Props {
@@ -344,12 +347,10 @@ const resetTouchDrag = () => {
       </div>
 
       <div v-if="widget.type === 'text'" class="text-widget">
-        <h3>Text Widget</h3>
-        <p>This is a placeholder text widget</p>
+        <h3>{{ widget.content.text }}</h3>
       </div>
       <div v-else-if="widget.type === 'image'" class="image-widget">
-        <h3>Image Widget</h3>
-        <div class="image-placeholder">📷</div>
+        <img :src="widget.content.url" alt="" />
       </div>
     </div>
   </div>
@@ -363,6 +364,9 @@ const resetTouchDrag = () => {
   overflow: hidden;
   cursor: grab;
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .widget:hover {
@@ -402,7 +406,6 @@ const resetTouchDrag = () => {
 
 .text-widget h3,
 .image-widget h3 {
-  margin: 0 0 8px 0;
   color: #f2faff;
   font-size: 1rem;
 }

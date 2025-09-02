@@ -11,13 +11,21 @@ defineProps<Props>()
 // Events this component can emit
 const emit = defineEmits<{
   close: []
-  createWidget: [{ type: 'text' | 'image'; width: number; height: number }]
+  createWidget: [
+    {
+      type: 'text' | 'image'
+      width: number
+      height: number
+      content: { text?: string; url?: string }
+    },
+  ]
 }>()
 
 const selectedType = ref<'text' | 'image'>('text')
 const width = ref(2)
 const height = ref(2)
 const textContent = ref('')
+const imageUrl = ref('')
 
 const handleBackdropClick = (event: MouseEvent) => {
   // Only close if clicking the backdrop, not the modal content
@@ -27,11 +35,26 @@ const handleBackdropClick = (event: MouseEvent) => {
 }
 
 const handleCreate = () => {
-  emit('createWidget', {
-    type: selectedType.value,
-    width: width.value,
-    height: height.value,
-  })
+  if (selectedType.value == 'text') {
+    emit('createWidget', {
+      type: selectedType.value,
+      width: width.value,
+      height: height.value,
+      content: {
+        text: textContent.value,
+      },
+    })
+  } else if (selectedType.value == 'image') {
+    emit('createWidget', {
+      type: selectedType.value,
+      width: width.value,
+      height: height.value,
+      content: {
+        url: imageUrl.value,
+      },
+    })
+  }
+
   emit('close')
 }
 
@@ -97,7 +120,22 @@ const handleKeydown = (event: KeyboardEvent) => {
           <!-- Content Configuration -->
           <div class="form-section">
             <label class="form-label">Content</label>
-            <input class="text-input" type="text" id="text" v-model="textContent" />
+            <label v-if="selectedType == 'text'" for="text">Text: </label>
+            <input
+              v-if="selectedType == 'text'"
+              class="text-input"
+              type="text"
+              id="text"
+              v-model="textContent"
+            />
+            <label v-if="selectedType == 'image'" for="img_url">Image URL: </label>
+            <input
+              v-if="selectedType == 'image'"
+              class="text-input"
+              type="text"
+              id="img_url"
+              v-model="imageUrl"
+            />
           </div>
 
           <!-- Size Configuration -->

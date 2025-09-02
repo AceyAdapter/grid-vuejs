@@ -17,6 +17,7 @@ const emit = defineEmits<{
 const selectedType = ref<'text' | 'image'>('text')
 const width = ref(2)
 const height = ref(2)
+const textContent = ref('')
 
 const handleBackdropClick = (event: MouseEvent) => {
   // Only close if clicking the backdrop, not the modal content
@@ -91,6 +92,12 @@ const handleKeydown = (event: KeyboardEvent) => {
                 <span>Image Widget</span>
               </button>
             </div>
+          </div>
+
+          <!-- Content Configuration -->
+          <div class="form-section">
+            <label class="form-label">Content</label>
+            <input class="text-input" type="text" id="text" v-model="textContent" />
           </div>
 
           <!-- Size Configuration -->
@@ -263,6 +270,14 @@ const handleKeydown = (event: KeyboardEvent) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.text-input {
+  height: 20px;
+  border-radius: 3px;
+  background: #404040;
+  color: white;
+  outline: none;
 }
 
 .size-control {

@@ -122,6 +122,14 @@ const createWidget = ({
   widgets.value.push(newWidget)
 }
 
+// Update widget position after drag and drop
+const updateWidget = ({ id, position }: { id: string; position: { x: number; y: number } }) => {
+  const widget = widgets.value.find((w) => w.id === id)
+  if (widget) {
+    widget.position = position
+  }
+}
+
 // Generate grid cells for empty spaces (optional visualization)
 const gridCells = computed(() => {
   const total = columns.value * rows.value
@@ -172,8 +180,16 @@ const gridCells = computed(() => {
         :data-y="cell.y"
       ></div>
 
-      <!-- Widgets -->
-      <WidgetObject v-for="widget in widgets" :key="widget.id" :widget="widget" />
+      <!-- Widgets with drag and drop support -->
+      <WidgetObject
+        v-for="widget in widgets"
+        :key="widget.id"
+        :widget="widget"
+        :columns="columns"
+        :rows="rows"
+        :widgets="widgets"
+        @update-widget="updateWidget"
+      />
     </div>
 
     <!-- Floating Add Button -->

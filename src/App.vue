@@ -1,22 +1,62 @@
 <script setup lang="ts">
 import GridContainer from './components/GridContainer.vue'
-
-const gridData = [1, 2, 3, 4, 5, 6, 7]
 </script>
 
 <template>
-  <div class="grid">
-    <GridContainer v-for="item in gridData" :key="item" />
+  <div class="app">
+    <header class="app-header">
+      <h1 class="primary">The Grid</h1>
+      <p class="secondary">Responsive Widget Dashboard</p>
+    </header>
+
+    <main class="app-main">
+      <GridContainer />
+    </main>
   </div>
 </template>
 
 <style scoped>
-.grid {
+.app {
+  min-height: 100vh;
   display: flex;
-  width: auto;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  padding: 12px;
+}
+
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: bold;
+}
+
+.app-header p {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.app-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+}
+
+@media (max-width: 767px) {
+  .app {
+    padding: 12px;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .app-header p {
+    font-size: 1rem;
+  }
 }
 </style>

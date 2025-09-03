@@ -2,7 +2,8 @@
 
 A responsive, drag-and-drop widget dashboard built with Vue 3 and TypeScript. Create and customize text and image widgets on a flexible grid layout.
 
-![Grid Dashboard Preview](https://via.placeholder.com/800x600/1b1a1a/f2faff?text=Grid+Dashboard+Preview)
+<img width="1902" height="915" alt="Screenshot 2025-09-03 192315" src="https://github.com/user-attachments/assets/0c5e543d-7c5e-4723-9784-22497d51291b" />
+
 
 ## Features
 

@@ -18,13 +18,33 @@ interface WidgetData {
     url?: string
     localFile?: string
   }
-  createdAt: number
 }
 
 const screenWidth = ref(window.innerWidth)
 const containerRef = ref<HTMLElement>()
 const isModalOpen = ref(false)
-const widgets = ref<WidgetData[]>([])
+const widgets = ref<WidgetData[]>([
+  {
+    id: 'placeholder-1',
+    type: 'text',
+    position: { x: 0, y: 0 },
+    size: { width: 3, height: 1 },
+    content: {
+      text: 'Click and drag widgets to customize!',
+      textColor: '#00ff1e',
+      backgroundColor: '#262429',
+    },
+  },
+  {
+    id: 'placeholder-2',
+    type: 'image',
+    position: { x: 0, y: 1 },
+    size: { width: 2, height: 2 },
+    content: {
+      url: 'https://media.licdn.com/dms/image/v2/D4E16AQFUHpDTXDEs1w/profile-displaybackgroundimage-shrink_350_1400/profile-displaybackgroundimage-shrink_350_1400/0/1706995405286?e=1759968000&v=beta&t=Dwfr9phL54_kGxaxEKmz_beCFgHGOjIXcgaH3c86ihc',
+    },
+  },
+])
 
 // Drag state for visual feedback
 const isDragging = ref(false)
@@ -217,7 +237,6 @@ const createWidget = ({
     position,
     size: { width, height },
     content: content,
-    createdAt: Date.now(),
   }
 
   widgets.value.push(newWidget)

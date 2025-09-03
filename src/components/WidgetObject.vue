@@ -445,6 +445,7 @@ const resetTouchDrag = () => {
 
 .widget:hover .drag-handle {
   opacity: 1;
+  padding-top: 8px;
 }
 
 .text-widget {

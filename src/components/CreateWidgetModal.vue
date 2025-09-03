@@ -389,39 +389,37 @@ const handleKeydown = (event: KeyboardEvent) => {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
   background-color: rgba(0, 0, 0, 0.7);
   backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
   animation: fadeIn 0.2s ease;
-  /* Ensure proper scrolling on mobile */
   overflow-y: auto;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .modal-container {
-  /* Container for centering and constraining modal size */
+  min-height: calc(100vh - 32px);
+  min-height: calc(100dvh - 32px); /* Dynamic viewport height for mobile */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   max-width: 500px;
-  max-height: calc(100vh - 32px);
-  display: flex;
-  flex-direction: column;
-  /* Allow modal to shrink on very small screens */
-  min-height: 0;
+  margin: 0 auto;
 }
 
 .modal-content {
   background-color: #2a2a2a;
   border-radius: 12px;
   border: 1px solid #404040;
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px); /* Dynamic viewport height for mobile */
   display: flex;
   flex-direction: column;
-  /* Ensure modal can scroll internally */
-  max-height: 100%;
-  overflow: hidden;
   animation: slideIn 0.2s ease;
 }
 
@@ -431,7 +429,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 1px solid #404040;
-  /* Prevent header from shrinking */
   flex-shrink: 0;
 }
 
@@ -450,7 +447,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   padding: 8px;
   border-radius: 4px;
   transition: all 0.2s ease;
-  /* Ensure touch target is adequate */
   min-width: 40px;
   min-height: 40px;
   display: flex;
@@ -464,12 +460,19 @@ const handleKeydown = (event: KeyboardEvent) => {
 }
 
 .modal-body {
-  /* Allow body to scroll while keeping header/footer fixed */
   overflow-y: auto;
   padding: 20px;
   flex: 1;
-  /* Minimum height to prevent content from being too cramped */
   min-height: 0;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #404040;
+  flex-shrink: 0;
 }
 
 .form-section {
@@ -506,7 +509,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   align-items: center;
   gap: 8px;
   color: #97968a;
-  /* Ensure adequate touch targets */
   min-height: 80px;
 }
 
@@ -540,7 +542,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   outline: none;
   transition: border-color 0.2s ease;
   margin-bottom: 16px;
-  /* Ensure input doesn't overflow on mobile */
   box-sizing: border-box;
   font-size: 16px; /* Prevents zoom on iOS */
 }
@@ -580,7 +581,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   background: #404040;
   cursor: pointer;
   padding: 2px;
-  /* Remove default appearance for better mobile experience */
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -731,7 +731,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 
 .text-preview {
   word-wrap: break-word;
-  /* Ensure text doesn't overflow preview */
   overflow-wrap: break-word;
   hyphens: auto;
 }
@@ -763,16 +762,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   font-size: 0.875rem;
 }
 
-.modal-footer {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-  padding: 16px 20px;
-  border-top: 1px solid #404040;
-  /* Prevent footer from shrinking */
-  flex-shrink: 0;
-}
-
 .button-secondary,
 .button-primary {
   padding: 12px 20px;
@@ -780,7 +769,6 @@ const handleKeydown = (event: KeyboardEvent) => {
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 0.875rem;
-  /* Ensure adequate touch targets */
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -811,13 +799,7 @@ const handleKeydown = (event: KeyboardEvent) => {
 /* Mobile-specific improvements */
 @media (max-width: 480px) {
   .modal-backdrop {
-    padding: 8px;
-    align-items: flex-start;
-    padding-top: 20px;
-  }
-
-  .modal-container {
-    max-height: calc(100vh - 40px);
+    padding: 12px;
   }
 
   .modal-header {
@@ -839,7 +821,7 @@ const handleKeydown = (event: KeyboardEvent) => {
   }
 
   .color-controls {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
   }
 
@@ -858,23 +840,6 @@ const handleKeydown = (event: KeyboardEvent) => {
 
   .form-section {
     margin-bottom: 20px;
-  }
-}
-
-/* Small mobile devices */
-@media (max-width: 360px) {
-  .modal-backdrop {
-    padding: 4px;
-    padding-top: 10px;
-  }
-
-  .color-input-group {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .color-picker {
-    width: 100%;
   }
 }
 

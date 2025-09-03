@@ -32,7 +32,7 @@ const draggedWidgetId = ref<string | null>(null)
 const hoveredCells = ref<{ x: number; y: number }[]>([])
 const isValidDrop = ref(true)
 
-// Trash zone state
+// Trash zone state - centralized here
 const isOverTrash = ref(false)
 
 const isMobile = computed(() => screenWidth.value < 768)
@@ -44,9 +44,79 @@ const gridTemplate = computed(() => {
   return `repeat(${columns.value}, 1fr)`
 })
 
+// Centralized trash zone detection
+const isMouseOverTrashZone = (mouseX: number, mouseY: number): boolean => {
+  const windowHeight = window.innerHeight
+  const isMobile = window.innerWidth < 768
+  const trashZoneHeight = isMobile ? 60 : 80
+  const trashZoneWidth = isMobile ? 150 : 200
+  const trashZoneBottom = isMobile ? 20 : 24
+  const trashZoneLeft = isMobile ? 20 : 24
+
+  const trashZoneTop = windowHeight - trashZoneHeight - trashZoneBottom
+  const trashZoneRight = trashZoneLeft + trashZoneWidth
+
+  return (
+    mouseX >= trashZoneLeft &&
+    mouseX <= trashZoneRight &&
+    mouseY >= trashZoneTop &&
+    mouseY <= windowHeight - trashZoneBottom
+  )
+}
+
 // Handle window resize
 const handleResize = () => {
   screenWidth.value = window.innerWidth
+}
+
+// Global mouse move handler for trash detection
+const handleGlobalMouseMove = (event: MouseEvent) => {
+  if (!isDragging.value) return
+
+  const wasOverTrash = isOverTrash.value
+  isOverTrash.value = isMouseOverTrashZone(event.clientX, event.clientY)
+
+  // Log for debugging
+  if (wasOverTrash !== isOverTrash.value) {
+    console.log('Trash hover changed:', isOverTrash.value)
+  }
+}
+
+// Global mouse up handler for final drop detection
+const handleGlobalMouseUp = (event: MouseEvent) => {
+  if (!isDragging.value || !draggedWidgetId.value) return
+
+  const isDroppedOnTrash = isMouseOverTrashZone(event.clientX, event.clientY)
+  console.log('Drop detected - over trash:', isDroppedOnTrash)
+
+  if (isDroppedOnTrash) {
+    deleteWidget(draggedWidgetId.value)
+  }
+}
+
+// Global touch handlers for mobile
+const handleGlobalTouchMove = (event: TouchEvent) => {
+  if (!isDragging.value) return
+
+  const touch = event.touches[0]
+  const wasOverTrash = isOverTrash.value
+  isOverTrash.value = isMouseOverTrashZone(touch.clientX, touch.clientY)
+
+  if (wasOverTrash !== isOverTrash.value) {
+    console.log('Trash hover changed (touch):', isOverTrash.value)
+  }
+}
+
+const handleGlobalTouchEnd = (event: TouchEvent) => {
+  if (!isDragging.value || !draggedWidgetId.value) return
+
+  const touch = event.changedTouches[0]
+  const isDroppedOnTrash = isMouseOverTrashZone(touch.clientX, touch.clientY)
+  console.log('Drop detected (touch) - over trash:', isDroppedOnTrash)
+
+  if (isDroppedOnTrash) {
+    deleteWidget(draggedWidgetId.value)
+  }
 }
 
 // Lifecycle hooks
@@ -54,6 +124,13 @@ onMounted(() => {
   window.addEventListener('resize', handleResize)
   window.addEventListener('beforeunload', clearLocalStorage)
   window.addEventListener('unload', clearLocalStorage)
+
+  // Global mouse/touch handlers for trash detection
+  document.addEventListener('mousemove', handleGlobalMouseMove)
+  document.addEventListener('mouseup', handleGlobalMouseUp)
+  document.addEventListener('touchmove', handleGlobalTouchMove, { passive: true })
+  document.addEventListener('touchend', handleGlobalTouchEnd)
+
   loadFromLocalStorage()
 })
 
@@ -61,6 +138,13 @@ onUnmounted(() => {
   window.removeEventListener('resize', handleResize)
   window.removeEventListener('beforeunload', clearLocalStorage)
   window.removeEventListener('unload', clearLocalStorage)
+
+  // Clean up global handlers
+  document.removeEventListener('mousemove', handleGlobalMouseMove)
+  document.removeEventListener('mouseup', handleGlobalMouseUp)
+  document.removeEventListener('touchmove', handleGlobalTouchMove)
+  document.removeEventListener('touchend', handleGlobalTouchEnd)
+
   clearLocalStorage()
 })
 
@@ -164,6 +248,7 @@ const updateWidget = ({ id, position }: { id: string; position: { x: number; y: 
 
 // Delete widget function
 const deleteWidget = (id: string) => {
+  console.log('Deleting widget:', id)
   const index = widgets.value.findIndex((w) => w.id === id)
   if (index !== -1) {
     widgets.value.splice(index, 1)
@@ -171,8 +256,19 @@ const deleteWidget = (id: string) => {
   }
 }
 
-// Drag event handlers
+// Centralized function to reset drag state
+const resetDragState = () => {
+  console.log('Resetting drag state')
+  isDragging.value = false
+  draggedWidgetId.value = null
+  hoveredCells.value = []
+  isValidDrop.value = true
+  isOverTrash.value = false
+}
+
+// Simplified drag event handlers
 const handleDragStart = ({ id }: { id: string }) => {
+  console.log('Drag started:', id)
   isDragging.value = true
   draggedWidgetId.value = id
 }
@@ -189,26 +285,9 @@ const handleDragMove = ({
 }
 
 const handleDragEnd = () => {
-  // Check if we need to delete the widget when drag ends
-  if (isOverTrash.value && draggedWidgetId.value) {
-    deleteWidget(draggedWidgetId.value)
-  }
-
-  console.log(isDragging.value)
-  console.log(isOverTrash.value)
-  console.log('dorps')
-
-  // Reset all drag states
-  isDragging.value = false
-  draggedWidgetId.value = null
-  hoveredCells.value = []
-  isValidDrop.value = true
-  isOverTrash.value = false
-}
-
-// Handle trash hover events from WidgetObject
-const handleTrashHover = ({ isOver }: { isOver: boolean }) => {
-  isOverTrash.value = isOver
+  console.log('Drag ended')
+  // Reset all drag states - trash deletion is handled by global handlers
+  resetDragState()
 }
 
 // LocalStorage functions
@@ -339,7 +418,6 @@ const visibleCells = computed(() => {
         @drag-start="handleDragStart"
         @drag-move="handleDragMove"
         @drag-end="handleDragEnd"
-        @trash-hover="handleTrashHover"
       />
     </div>
 

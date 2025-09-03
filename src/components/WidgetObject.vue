@@ -30,7 +30,6 @@ const emit = defineEmits<{
   dragStart: [{ id: string }]
   dragEnd: []
   dragMove: [{ hoveredCells: { x: number; y: number }[]; isValid: boolean }]
-  trashHover: [{ isOver: boolean }] // New event for trash zone
 }>()
 
 // Reactive state for drag operations
@@ -118,26 +117,6 @@ const getCellsForPosition = (gridX: number, gridY: number) => {
   return cells
 }
 
-// Check if mouse is over trash zone
-const isMouseOverTrashZone = (mouseX: number, mouseY: number): boolean => {
-  const windowHeight = window.innerHeight
-  const isMobile = window.innerWidth < 768
-  const trashZoneHeight = isMobile ? 80 : 100
-  const trashZoneWidth = isMobile ? 170 : 220
-  const trashZoneBottom = 24
-  const trashZoneLeft = 24
-
-  const trashZoneTop = windowHeight - trashZoneHeight - trashZoneBottom
-  const trashZoneRight = trashZoneLeft + trashZoneWidth
-
-  return (
-    mouseX >= trashZoneLeft &&
-    mouseX <= trashZoneRight &&
-    mouseY >= trashZoneTop &&
-    mouseY <= windowHeight - trashZoneBottom
-  )
-}
-
 // Improved grid position calculation based on widget center
 const getGridPositionFromMouse = (mouseX: number, mouseY: number) => {
   const gridElement = document.querySelector('.grid-wrapper') as HTMLElement
@@ -213,19 +192,6 @@ const handleMouseMove = (event: MouseEvent) => {
     y: event.clientY - clickOffset.value.y,
   }
 
-  // Check if we're over the trash zone first
-  const isOverTrash = isMouseOverTrashZone(event.clientX, event.clientY)
-
-  if (isOverTrash) {
-    // If over trash, emit trash hover and clear grid cells
-    emit('trashHover', { isOver: true })
-    emit('dragMove', { hoveredCells: [], isValid: false })
-    return
-  } else {
-    // Not over trash, clear trash state
-    emit('trashHover', { isOver: false })
-  }
-
   // Calculate which grid position we're hovering over
   const gridPos = getGridPositionFromMouse(event.clientX, event.clientY)
 
@@ -236,7 +202,7 @@ const handleMouseMove = (event: MouseEvent) => {
     // Update current validity state
     currentHoverIsValid.value = isValid
 
-    // Only emit cells if valid - don't show invalid red squares
+    // Only emit cells if valid
     if (isValid) {
       const cells = getCellsForPosition(gridPos.x, gridPos.y)
       emit('dragMove', { hoveredCells: cells, isValid: true })
@@ -252,15 +218,6 @@ const handleMouseMove = (event: MouseEvent) => {
 
 const handleMouseUp = (event: MouseEvent) => {
   if (!isDragging.value) return
-
-  // Check if we're dropping on trash zone
-  const isOverTrash = isMouseOverTrashZone(event.clientX, event.clientY)
-
-  if (isOverTrash) {
-    // Delete the widget by not updating position - parent will handle deletion
-    resetDrag()
-    return
-  }
 
   const gridPos = getGridPositionFromMouse(event.clientX, event.clientY)
 
@@ -278,10 +235,9 @@ const handleMouseUp = (event: MouseEvent) => {
 const resetDrag = () => {
   isDragging.value = false
   hoveredGridPosition.value = null
-  currentHoverIsValid.value = true // Reset to valid state
+  currentHoverIsValid.value = true
 
-  // Emit drag end event and clear trash state
-  emit('trashHover', { isOver: false })
+  // Emit drag end event
   emit('dragEnd')
 
   document.removeEventListener('mousemove', handleMouseMove)
@@ -289,7 +245,7 @@ const resetDrag = () => {
   document.body.style.userSelect = ''
 }
 
-// Touch event handlers for mobile support (simplified for brevity)
+// Touch event handlers for mobile support
 const handleTouchStart = (event: TouchEvent) => {
   event.preventDefault()
   const touch = event.touches[0]
@@ -331,19 +287,6 @@ const handleTouchMove = (event: TouchEvent) => {
     y: touch.clientY - clickOffset.value.y,
   }
 
-  // Similar logic to mouse move but for touch
-  const isOverTrash = isMouseOverTrashZone(touch.clientX, touch.clientY)
-
-  console.log(isOverTrash)
-
-  if (isOverTrash) {
-    emit('trashHover', { isOver: true })
-    emit('dragMove', { hoveredCells: [], isValid: false })
-    return
-  } else {
-    emit('trashHover', { isOver: false })
-  }
-
   const gridPos = getGridPositionFromMouse(touch.clientX, touch.clientY)
 
   if (gridPos) {
@@ -367,15 +310,6 @@ const handleTouchEnd = (event: TouchEvent) => {
   if (!isDragging.value) return
 
   const touch = event.changedTouches[0]
-
-  // Check if we're dropping on trash zone
-  const isOverTrash = isMouseOverTrashZone(touch.clientX, touch.clientY)
-
-  if (isOverTrash) {
-    resetTouchDrag()
-    return
-  }
-
   const gridPos = getGridPositionFromMouse(touch.clientX, touch.clientY)
 
   if (gridPos && !wouldOverlap(gridPos.x, gridPos.y)) {
@@ -393,7 +327,6 @@ const resetTouchDrag = () => {
   hoveredGridPosition.value = null
   currentHoverIsValid.value = true
 
-  emit('trashHover', { isOver: false })
   emit('dragEnd')
 
   document.removeEventListener('touchmove', handleTouchMove)

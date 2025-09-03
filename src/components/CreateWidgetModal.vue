@@ -173,7 +173,7 @@ const handleKeydown = (event: KeyboardEvent) => {
     <div
       v-if="isOpen"
       class="modal-backdrop"
-      @click="handleBackdropClick"
+      @mousedown="handleBackdropClick"
       @keydown="handleKeydown"
       tabindex="-1"
     >

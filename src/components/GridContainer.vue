@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import FloatingAddButton from './FloatingAddButton.vue'
 import CreateWidgetModal from './CreateWidgetModal.vue'
 import WidgetObject from './WidgetObject.vue'
+import TrashZone from './TrashZone.vue'
 
 // Updated Widget interface to match new content structure
 interface WidgetData {
@@ -30,6 +31,9 @@ const isDragging = ref(false)
 const draggedWidgetId = ref<string | null>(null)
 const hoveredCells = ref<{ x: number; y: number }[]>([])
 const isValidDrop = ref(true)
+
+// Trash zone state
+const isOverTrash = ref(false)
 
 const isMobile = computed(() => screenWidth.value < 768)
 const columns = computed(() => (isMobile.value ? 4 : 8))
@@ -158,6 +162,15 @@ const updateWidget = ({ id, position }: { id: string; position: { x: number; y: 
   }
 }
 
+// Delete widget function
+const deleteWidget = (id: string) => {
+  const index = widgets.value.findIndex((w) => w.id === id)
+  if (index !== -1) {
+    widgets.value.splice(index, 1)
+    saveToLocalStorage()
+  }
+}
+
 // Drag event handlers
 const handleDragStart = ({ id }: { id: string }) => {
   isDragging.value = true
@@ -176,10 +189,26 @@ const handleDragMove = ({
 }
 
 const handleDragEnd = () => {
+  // Check if we need to delete the widget when drag ends
+  if (isOverTrash.value && draggedWidgetId.value) {
+    deleteWidget(draggedWidgetId.value)
+  }
+
+  console.log(isDragging.value)
+  console.log(isOverTrash.value)
+  console.log('dorps')
+
+  // Reset all drag states
   isDragging.value = false
   draggedWidgetId.value = null
   hoveredCells.value = []
   isValidDrop.value = true
+  isOverTrash.value = false
+}
+
+// Handle trash hover events from WidgetObject
+const handleTrashHover = ({ isOver }: { isOver: boolean }) => {
+  isOverTrash.value = isOver
 }
 
 // LocalStorage functions
@@ -310,8 +339,12 @@ const visibleCells = computed(() => {
         @drag-start="handleDragStart"
         @drag-move="handleDragMove"
         @drag-end="handleDragEnd"
+        @trash-hover="handleTrashHover"
       />
     </div>
+
+    <!-- Trash Zone - Only visible during drag -->
+    <TrashZone :is-visible="isDragging" :is-active="isOverTrash" />
 
     <!-- Floating Add Button -->
     <FloatingAddButton @open-modal="openModal" />

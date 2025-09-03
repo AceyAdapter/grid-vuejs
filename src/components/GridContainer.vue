@@ -41,7 +41,7 @@ const widgets = ref<WidgetData[]>([
     position: { x: 0, y: 1 },
     size: { width: 2, height: 2 },
     content: {
-      url: 'https://media.licdn.com/dms/image/v2/D4E16AQFUHpDTXDEs1w/profile-displaybackgroundimage-shrink_350_1400/profile-displaybackgroundimage-shrink_350_1400/0/1706995405286?e=1759968000&v=beta&t=Dwfr9phL54_kGxaxEKmz_beCFgHGOjIXcgaH3c86ihc',
+      localFile: '/pic.jpg',
     },
   },
 ])

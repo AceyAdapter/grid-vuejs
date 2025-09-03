@@ -73,13 +73,7 @@ const handleResize = () => {
 const handleGlobalMouseMove = (event: MouseEvent) => {
   if (!isDragging.value) return
 
-  const wasOverTrash = isOverTrash.value
   isOverTrash.value = isMouseOverTrashZone(event.clientX, event.clientY)
-
-  // Log for debugging
-  if (wasOverTrash !== isOverTrash.value) {
-    console.log('Trash hover changed:', isOverTrash.value)
-  }
 }
 
 // Global mouse up handler for final drop detection
@@ -87,7 +81,6 @@ const handleGlobalMouseUp = (event: MouseEvent) => {
   if (!isDragging.value || !draggedWidgetId.value) return
 
   const isDroppedOnTrash = isMouseOverTrashZone(event.clientX, event.clientY)
-  console.log('Drop detected - over trash:', isDroppedOnTrash)
 
   if (isDroppedOnTrash) {
     deleteWidget(draggedWidgetId.value)
@@ -99,12 +92,7 @@ const handleGlobalTouchMove = (event: TouchEvent) => {
   if (!isDragging.value) return
 
   const touch = event.touches[0]
-  const wasOverTrash = isOverTrash.value
   isOverTrash.value = isMouseOverTrashZone(touch.clientX, touch.clientY)
-
-  if (wasOverTrash !== isOverTrash.value) {
-    console.log('Trash hover changed (touch):', isOverTrash.value)
-  }
 }
 
 const handleGlobalTouchEnd = (event: TouchEvent) => {
@@ -112,7 +100,6 @@ const handleGlobalTouchEnd = (event: TouchEvent) => {
 
   const touch = event.changedTouches[0]
   const isDroppedOnTrash = isMouseOverTrashZone(touch.clientX, touch.clientY)
-  console.log('Drop detected (touch) - over trash:', isDroppedOnTrash)
 
   if (isDroppedOnTrash) {
     deleteWidget(draggedWidgetId.value)
@@ -248,17 +235,17 @@ const updateWidget = ({ id, position }: { id: string; position: { x: number; y: 
 
 // Delete widget function
 const deleteWidget = (id: string) => {
-  console.log('Deleting widget:', id)
   const index = widgets.value.findIndex((w) => w.id === id)
   if (index !== -1) {
     widgets.value.splice(index, 1)
     saveToLocalStorage()
   }
+
+  resetDragState()
 }
 
 // Centralized function to reset drag state
 const resetDragState = () => {
-  console.log('Resetting drag state')
   isDragging.value = false
   draggedWidgetId.value = null
   hoveredCells.value = []
@@ -268,7 +255,6 @@ const resetDragState = () => {
 
 // Simplified drag event handlers
 const handleDragStart = ({ id }: { id: string }) => {
-  console.log('Drag started:', id)
   isDragging.value = true
   draggedWidgetId.value = id
 }
@@ -285,7 +271,6 @@ const handleDragMove = ({
 }
 
 const handleDragEnd = () => {
-  console.log('Drag ended')
   // Reset all drag states - trash deletion is handled by global handlers
   resetDragState()
 }

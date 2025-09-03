@@ -1,39 +1,57 @@
-# grid-vuejs
+# The Grid
 
-This template should help get you started developing with Vue 3 in Vite.
+A responsive, drag-and-drop widget dashboard built with Vue 3 and TypeScript. Create and customize text and image widgets on a flexible grid layout.
 
-## Recommended IDE Setup
+![Grid Dashboard Preview](https://via.placeholder.com/800x600/1b1a1a/f2faff?text=Grid+Dashboard+Preview)
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Features
 
-## Type Support for `.vue` Imports in TS
+- **Responsive Grid**: 4x6 on mobile, 8x6 on desktop
+- **Drag & Drop**: Move widgets around with smooth interactions
+- **Text Widgets**: Customizable content, colors, and styling
+- **Image Widgets**: Upload files or use URLs with preview
+- **Auto-placement**: Smart positioning for new widgets
+- **Touch Support**: Works on mobile devices
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## Tech Stack
 
-## Customize configuration
+- Vue 3 with Composition API
+- TypeScript
+- CSS Grid for layout
+- Vite for build tooling
+- ESLint + Prettier for code quality
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+## Getting Started
 
-## Project Setup
-
-```sh
+```bash
+# Install dependencies
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
+# Start development server
 npm run dev
-```
 
-### Type-Check, Compile and Minify for Production
-
-```sh
+# Build for production
 npm run build
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## Usage
 
-```sh
-npm run lint
-```
+1. Click the **+** button to create a new widget
+2. Choose between text or image widget types
+3. Customize size, content, and styling
+4. **Drag widgets** to rearrange them
+5. **Drag to trash** to delete widgets
+
+## Project Purpose
+
+This is a learning project to explore Vue 3 features including:
+
+- Composition API with `<script setup>`
+- Reactive state management
+- Component communication with emits
+- Touch and mouse event handling
+- TypeScript integration
+
+## License
+
+MIT
